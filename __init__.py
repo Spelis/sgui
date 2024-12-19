@@ -1,7 +1,5 @@
 import string
 import pyray as _rl
-import math
-import colorsys as _cs
 import inspect,datetime
 
 indent = 0
