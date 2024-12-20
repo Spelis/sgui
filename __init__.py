@@ -465,8 +465,10 @@ class slider(Widget):
             GUIState.Widgets[f"sl_{id}"] = self.obj
         value = self.obj.value
         pressed = self.obj.pressed
+        textactive = self.obj.textactive
         self.value = value
         self.pressed = pressed
+        self.textactive = textactive
         if curwindow.collapsed:
             return
         if super().__init__(winx,winy,w,12):
@@ -498,6 +500,7 @@ class slider(Widget):
         self.value = value
         GUIState.Widgets[f"sl_{id}"].pressed = pressed
         GUIState.Widgets[f"sl_{id}"].value = value
+        GUIState.Widgets[f"sl_{id}"].textactive = textactive
     def limit(self,mini=None,maxi=None):
         id = self.id
         value = GUIState.Widgets[f"sl_{id}"].value
