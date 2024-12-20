@@ -2,7 +2,6 @@ import string
 import pyray as _rl
 import inspect,datetime
 
-indent = 0
 
 class GUIState:
     Keyboard = []
@@ -32,23 +31,23 @@ def lerp(a,b,t):
     t *= _rl.get_frame_time()*30
     return a+(b-a)*t
 
-global windows,curwindow,winy
+global curwindow,winy,lastwinychange,winx,lastwinxchange,indent
 
 def init():
-    global windows,curwindow,winy,lastwinychange,winx,lastwinxchange
-    windows = []
+    global curwindow,winy,lastwinychange,winx,lastwinxchange,indent
+    indent = 0
     curwindow = None
     winy,lastwinychange,winx,lastwinxchange = 0,[],0,[]
     
 def sameline():
-    global winy,lastwinychange,winx,lastwinxchange,indent
+    global winy, winx, lastwinxchange, lastwinychange, curwindow
     if len(lastwinxchange) == 0 or len(lastwinychange) == 0:
         return
     winy -= lastwinychange[-1]
     winx = lastwinxchange[-1]-curwindow.scroll_x
 
 def cancel_sameline():
-    global winy,lastwinychange,winx,lastwinxchange,indent
+    global winy, lastwinychange,winx
     winy += lastwinychange[-1]
     winx = indent
     
@@ -225,7 +224,7 @@ class Window:
 
 class Widget:
     def __init__(self,x,y,w,h,*args):
-        global winy,lastwinxchange,lastwinychange,winx
+        global winy,winx,lastwinxchange,lastwinychange,indent
         cw = curwindow
         self.x = x+cw.scroll_x
         self.y = y+cw.scroll_y
@@ -255,12 +254,12 @@ class Widget:
 
 class button(Widget):
     def __init__(self,w,label):
-        global winy,lastwinychange,winx,lastwinxchange,indent
         self.pressed = False
         self.held = False
         if curwindow.collapsed:
             return
         if super().__init__(winx,winy,w,12):
+            self = None
             return
         color = _rl.Color(128,128,128,0)
         fg = _rl.Color(255,255,255,255)
@@ -278,12 +277,13 @@ class button(Widget):
 
 class button_img(Widget):
     def __init__(self,w,h,image,source=None):
-        global winy,lastwinychange,winx,lastwinxchange,indent
         self.pressed = False
         self.held = False
         if curwindow.collapsed:
+            self = None
             return
         if super().__init__(winx,winy,w,h):
+            self = None
             return
         if source is None:
             source = [0,0,image.width,image.height]
@@ -302,12 +302,12 @@ class button_img(Widget):
 
 class label(Widget):
     def __init__(self,text):
-        global winy,lastwinychange,winx,lastwinxchange,indent
         if curwindow.collapsed:
             return
         w = _measure_text(text,10)
         h = (12 * (text.count('\n')+1))
         if super().__init__(winx,winy,w,h):
+            self = None
             return
         _rl.draw_text(text,round(self.x),round(self.y),10,_rl.Color(255,255,255,255))
         
@@ -342,7 +342,6 @@ class TextInput:
         
 class textinput(Widget):
     def __init__(self,w:int,label:str,id:str,default="") -> TextInput:
-        global winy, lastwinychange, winx, lastwinxchange, indent
         bg = _rl.Color(128, 128, 128, 64)
         fg = _rl.Color(255, 255, 255, 255)
         if f"ti_{id}" in GUIState.Widgets:
@@ -356,6 +355,7 @@ class textinput(Widget):
         if curwindow.collapsed:
             return
         if super().__init__(winx,winy,w,12):
+            self = None
             return
         self.w = max(self.w, _measure_text(self.value+" ",10)+5)
         if not curwindow.h < self.y+5:
@@ -398,7 +398,6 @@ class textinput(Widget):
 
 class slider_vec2(Widget):
     def __init__(self,w:int,h:int,label:str,id:str,sens:float=0.005,default=[0,0]):
-        global winy, lastwinychange, winx, lastwinxchange, indent
         self.id = id
         if f"sl2d_{id}" in GUIState.Widgets:
             self.obj = GUIState.Widgets[f"sl2d_{id}"]
@@ -412,6 +411,7 @@ class slider_vec2(Widget):
             return
         pressed = self.obj.pressed
         if super().__init__(winx,winy,w,h):
+            self = None
             return
         mpd = _rl.get_mouse_delta()
         bg =  _rl.Color(128, 128, 128, 64)
@@ -457,7 +457,6 @@ class slider_vec2(Widget):
         
 class slider(Widget):
     def __init__(self,w,label,id,sens=0.005,pressed=False,default=0):
-        global winy, lastwinychange, winx, lastwinxchange, indent
         self.id = id
         if f"sl_{id}" in GUIState.Widgets:
             self.obj = GUIState.Widgets[f"sl_{id}"]
@@ -471,6 +470,7 @@ class slider(Widget):
         if curwindow.collapsed:
             return
         if super().__init__(winx,winy,w,12):
+            self = None
             return
         mpd = _rl.get_mouse_delta()
         bg =  _rl.Color(128, 128, 128, 64)
@@ -513,7 +513,6 @@ class slider(Widget):
     
 class solidcolor(Widget):
     def __init__(self,w,h,color,border=False):
-        global winy, lastwinychange, winx, lastwinxchange, indent, lastwinxchange
         if curwindow.collapsed:
             return
         if super().__init__(winx,winy,w,h):
@@ -523,7 +522,6 @@ class solidcolor(Widget):
     
 class colorpicker(Widget):
     def __init__(self,id,pressed=False,default=[0,0,0]):
-        global winy, lastwinychange, winx, lastwinxchange, indent,curwindow
         self.id = id
         if f"cp_{id}" in GUIState.Widgets:
             self.obj = GUIState.Widgets[f"cp_{id}"]
@@ -557,10 +555,10 @@ class colorpicker(Widget):
 
 class image(Widget):
     def __init__(self,w,h,image,source=None):
-        global winy, lastwinychange, winx, lastwinxchange, indent, lastwinxchange
         if curwindow.collapsed:
             return
         if super().__init__(winx,winy,w,h):
+            self = None
             return
         if source == None:
             source = [0,0,image.width,image.height]
@@ -605,12 +603,12 @@ class collapsing_header(Widget):
         if self.collapsed:
             curwindow.collapsed = True
     def show(self):
-        global winy, lastwinychange, winx, lastwinxchange, indent
         self.startx = winx
         self.starty = winy
         if curwindow.collapsed and self.wincollapsed:
             return False
         if super().__init__(winx,winy,self.w,15):
+            self = None
             return
         _rl.draw_rectangle(self.x,self.y,self.w,self.vh,_rl.Color(0 if not self.collapsed else 128,128,128,255))
         _rl.draw_rectangle_lines_ex([self.x,self.y,self.w,self.vh],1,_rl.Color(0 if not self.collapsed else 255,255,255,255))
@@ -627,7 +625,6 @@ class collapsing_header(Widget):
         return True
 
 def reset_collapsing_header(id:str):
-    global winx,lastwinxchange,winy,lastwinychange
     self = GUIState.Widgets[f"ch_{id}"]
     #if not self.collapsed:
     _rl.draw_line(self.startx+1,self.starty+15,self.startx+1,winy-1+curwindow.scroll_y,_rl.Color(0,255,255,255))
@@ -647,7 +644,6 @@ class checkbox_button(Widget):
             id (str): identifier for the widget
             value (bool, optional): value. Defaults to False.
         """
-        global winy, lastwinychange, winx, lastwinxchange, indent, lastwinxchange
         self.id = id
         self.label = label
         self.value = value
@@ -659,6 +655,7 @@ class checkbox_button(Widget):
         if curwindow.collapsed:
             return
         if super().__init__(winx,winy,12+_measure_text(label,10),12):
+            self = None
             return
         
         if self.value:
