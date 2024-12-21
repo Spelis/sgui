@@ -1,16 +1,16 @@
 Welcome to SGUI docs!
-====================
+=====================
 
 Introduction
------------
+------------
 
 SGUI is a Python library for creating graphical user interfaces (GUIs). It uses the Raylib library for rendering and input
 
 Installation
------------
+------------
 
 Prerequisites
-~~~~~~~~~~~~
+~~~~~~~~~~~~~
 
 Before installing, make sure you have:
 
@@ -18,24 +18,24 @@ Before installing, make sure you have:
 - pip (Python package installer)
 
 Installation
-~~~~~~~~~~~
+~~~~~~~~~~~~
 
 .. code-block:: bash
 
     pip install spelis_sgui
 
 Troubleshooting
-~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
 
 If you encounter any issues during installation, please create an issue on the `GitHub repository <https://github.com/spelis/sgui>`_.
 
 Next Steps
-~~~~~~~~~
+~~~~~~~~~~
 
 After successful installation, proceed to the :doc:`getting_started` guide.
 
 Getting started
--------------
+---------------
 
 Here's a quick guide to getting started with SGUI.
 
@@ -55,7 +55,7 @@ Here's a quick guide to getting started with SGUI.
         end_drawing()
 
 API reference
-------------------------------
+-------------
 
 .. automodule:: sgui
     :members:
