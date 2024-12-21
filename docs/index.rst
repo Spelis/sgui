@@ -16,10 +16,3 @@ Contents
    getting_started
    api_reference
    contributing
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
