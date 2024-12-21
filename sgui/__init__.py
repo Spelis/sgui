@@ -50,6 +50,7 @@ def init():
     winy,lastwinychange,winx,lastwinxchange = 0,[],0,[]
     
 def sameline():
+    """Puts widgets next to eachother"""
     global winy, winx, lastwinxchange, lastwinychange, curwindow
     if len(lastwinxchange) == 0 or len(lastwinychange) == 0:
         return
@@ -57,6 +58,7 @@ def sameline():
     winx = lastwinxchange[-1]-curwindow.scroll_x
 
 def cancel_sameline():
+    """Cancels the last sameline call."""
     global winy, lastwinychange,winx
     winy += lastwinychange[-1]
     winx = indent
@@ -82,6 +84,20 @@ def _get_class_name(depth=2):
 
 class Window:
     def __init__(self,x,y,w,h,title,collapsed=False,resizable=True,movable=True,titlecolor=_rl.Color(0,255,255,255),scrollable=True):
+        """A draggable, resizable window container for GUI widgets.
+
+        Args:
+            x (int): Initial x position of window
+            y (int): Initial y position of window 
+            w (int): Width of window content area
+            h (int): Height of window content area
+            title (str): Window title text
+            collapsed (bool, optional): Start collapsed state. Defaults to False.
+            resizable (bool, optional): Allow window resizing. Defaults to True.
+            movable (bool, optional): Allow window dragging. Defaults to True.
+            titlecolor (_rl.Color, optional): Color of title bar. Defaults to cyan.
+            scrollable (bool, optional): Enable content scrolling. Defaults to True.
+        """
         self.x = x
         self.y = y
         self.w = w+20

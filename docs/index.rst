@@ -58,7 +58,7 @@ API reference
 .. autoclass:: sgui.Widget
 
 .. autoclass:: sgui.button
-.. autoclass:: sgui.imgbutton
+.. autoclass:: sgui.button_img
 .. autoclass:: sgui.label
 .. autoclass:: sgui.textinput
 .. autoclass:: sgui.slider_vec2
@@ -66,7 +66,7 @@ API reference
 .. autoclass:: sgui.solidcolor
 .. autoclass:: sgui.colorpicker
 .. autoclass:: sgui.image
-.. autoclass:: sgui.collapsingheader
+.. autoclass:: sgui.collapsing_header
     :members:
 .. autofunction:: sgui.reset_collapsing_header
 .. autoclass:: sgui.checkbox_button
