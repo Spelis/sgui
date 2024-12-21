@@ -1,4 +1,8 @@
-# SGUI - Spelis's GUI Library
+# SGUI - Spelis's GUI Library 
+![PyPI - Version](https://img.shields.io/pypi/v/spelis_sgui)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/spelis_sgui)
+![GitHub repo size](https://img.shields.io/github/repo-size/spelis/sgui)
+
 
 A lightweight and easy-to-use GUI library inspired by the [ImGui](https://github.com/ocornut/imgui) library. The library is written in Python and uses the [Raylib](https://github.com/raysan5/raylib) library for rendering.
 
@@ -9,14 +13,8 @@ A lightweight and easy-to-use GUI library inspired by the [ImGui](https://github
 - Easy to use and integrate
 
 ## Installation
-### Manual (GitHub)
-1. Clone the repo: `git clone https://github.com/Spelis/sgui.git` and `cd` into it.
-2. Install dependencies: `pip install -r requirements.txt`
-3. Build Package: `py -m build`
-4. Install Package: `pip install .`
-### PyPI
 1. Install the package: `pip install spelis-sgui`
-2. Import the library: 
+2. Import the library: `import sgui as gui`
 
 ## Example Usage
 ```python

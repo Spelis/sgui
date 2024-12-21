@@ -1,5 +1,5 @@
 from pyray import *
-import src as gui
+import sgui as gui
 import subprocess, os, platform
 
 def open_file(filepath):
@@ -34,6 +34,7 @@ while not window_should_close():
             gui.sameline()
             gui.label("Yipee!")
         gui.label("value of input: " + gui.textinput(100,"Type Something!","testinput").value)
+        gui.textarea(100,100,"Type a lot of things!","testarea").value
         if gui.button_img(50,50,testimg).pressed:
             print("test")
         gui.sameline()
