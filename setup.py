@@ -2,10 +2,10 @@ from setuptools import setup, find_packages
 
 setup(
     name="sgui",
-    version="0.0.5",
+    version="0.0.6",
     packages=find_packages(),
     install_requires=[
-        "raylib"
+        "raylib>=5.0.0"
     ],
     author="Elis Eriksson",
     author_email="elis.eriksson.2010@gmail.com",

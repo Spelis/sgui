@@ -14,7 +14,6 @@ init_window(1280,720,"SGUI Example")
 gui.init()
 win = gui.Window(10,10,200,150,"test")
 win2 = gui.Window(10,250,200,150,"test2",Color(255,0,0,255))
-testimg = load_texture("test.png")
 
 timesclicked = 0
 while not window_should_close():
@@ -34,10 +33,10 @@ while not window_should_close():
             gui.sameline()
             gui.label("Yipee!")
         gui.label("value of input: " + gui.textinput(100,"Type Something!","testinput").value)
-        if gui.button_img(50,50,testimg).pressed:
+        if gui.button_img(50,50,"testimg.png").pressed:
             print("test")
         gui.sameline()
-        gui.image(50,50,testimg)
+        gui.image(50,50,"testimg.png")
         gui.slider_vec2(50,50,"test","2D slider???").limit(-10,10)
         g = gui.slider(100,"Limited Slider","test").limit(-10,10).value
         gui.label("value of slider = " + str(g))

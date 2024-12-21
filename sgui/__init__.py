@@ -31,6 +31,13 @@ def lerp(a,b,t):
     t *= _rl.get_frame_time()*30
     return a+(b-a)*t
 
+_imagecache:dict[str, _rl.Texture2D] = {}
+
+def _cached_image(fp):
+    if fp not in _imagecache:
+        _imagecache[fp] = _rl.load_texture(fp)
+    return _imagecache[fp]
+
 global curwindow,winy,lastwinychange,winx,lastwinxchange,indent
 
 def init():
@@ -276,9 +283,10 @@ class button(Widget):
         _rl.draw_text(label,self.x+2,self.y+1,10,fg)
 
 class button_img(Widget):
-    def __init__(self,w,h,image,source=None):
+    def __init__(self,w,h,fp,source=None):
         self.pressed = False
         self.held = False
+        image = _cached_image(fp)
         if curwindow.collapsed:
             self = None
             return
@@ -568,6 +576,14 @@ class slider(Widget):
     
 class solidcolor(Widget):
     def __init__(self,w,h,color,border=False):
+        """draws a solid color rectangle.
+
+        Args:
+            w (int): rectangle width
+            h (int): rectangle height
+            color (list): rectangle color [r,g,b]
+            border (bool, optional): should the rectangle have a dark border? Defaults to False.
+        """
         if curwindow.collapsed:
             return
         if super().__init__(winx,winy,w,h):
@@ -576,7 +592,13 @@ class solidcolor(Widget):
         if border: _rl.draw_rectangle_lines_ex([self.x,self.y,self.w,self.vh],1,[color.r//2,color.g//2,color.b//2,255])
     
 class colorpicker(Widget):
-    def __init__(self,id,pressed=False,default=[0,0,0]):
+    def __init__(self,id,default=[0,0,0]):
+        """simple color picker widget.
+
+        Args:
+            id (_type_): colorpicker id
+            default (list, optional): default r,g,b color. Defaults to [0,0,0].
+        """
         self.id = id
         if f"cp_{id}" in GUIState.Widgets:
             self.obj = GUIState.Widgets[f"cp_{id}"]
@@ -609,7 +631,16 @@ class colorpicker(Widget):
         
 
 class image(Widget):
-    def __init__(self,w,h,image,source=None):
+    def __init__(self,w:int,h:int,fp:str,source:list=None):
+        """Simple image widget.
+
+        Args:
+            w (int): image widh
+            h (int): image height
+            fp (str): file path
+            source (list, optional): image source (x,y,w,h). Defaults to None.
+        """
+        image = _cached_image(fp)
         if curwindow.collapsed:
             return
         if super().__init__(winx,winy,w,h):
@@ -680,8 +711,12 @@ class collapsing_header(Widget):
         return True
 
 def reset_collapsing_header(id:str):
+    """Resets the collapsing header to its original state.
+
+    Args:
+        id (str): collapsing header identifier
+    """
     self = GUIState.Widgets[f"ch_{id}"]
-    #if not self.collapsed:
     _rl.draw_line(self.startx+1,self.starty+15,self.startx+1,winy-1+curwindow.scroll_y,_rl.Color(0,255,255,255))
     curwindow.collapsed = self.wincollapsed
     winx = self.oldindent

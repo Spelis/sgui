@@ -15,6 +15,7 @@ A lightweight and easy-to-use GUI library inspired by the [ImGui](https://github
 ## Installation
 1. Install the package: `pip install spelis-sgui`
 2. Import the library: `import sgui as gui`
+3. If something went wrong and raylib (pyray) isnt installed, run this command: `pip install raylib`
 
 ## Example Usage
 ```python
