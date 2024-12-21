@@ -4,6 +4,7 @@ import inspect,datetime
 
 
 class GUIState:
+    """GUI state, example usage might be to edit widget values or see if a widget uses a keyboard key."""
     Keyboard = []
     Mouse = []
     MouseWheel = False
@@ -24,6 +25,7 @@ def _measure_text(text,fs):
     
 
 def set_indent(value):
+    """Sets the indent level for widgets. Default is 0."""
     global indent
     indent = value
     
@@ -41,6 +43,7 @@ def _cached_image(fp):
 global curwindow,winy,lastwinychange,winx,lastwinxchange,indent
 
 def init():
+    """Initializes the GUI system. Must be called before any other GUI functions."""
     global curwindow,winy,lastwinychange,winx,lastwinxchange,indent
     indent = 0
     curwindow = None
@@ -59,7 +62,8 @@ def cancel_sameline():
     winx = indent
     
 def _log(text):
-    print(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] {text}")
+    """Prints a log message with a timestamp and what function called it."""
+    print(f"[{datetime.datetime.now().strftime('%H:%M:%S')}] {_get_class_name} {text}")
     
 def _get_class_name(depth=2):
     """Gets the class name of the caller.
@@ -231,6 +235,7 @@ class Window:
 
 class Widget:
     def __init__(self,x,y,w,h,*args):
+        """Base class for all widgets. Useful for creating custom widgets."""
         global winy,winx,lastwinxchange,lastwinychange,indent
         cw = curwindow
         self.x = x+cw.scroll_x
@@ -261,6 +266,12 @@ class Widget:
 
 class button(Widget):
     def __init__(self,w,label):
+        """Standard button widget with text label.
+
+        Args:
+            w (int): Width of the button in pixels
+            label (str): Text to display on the button
+        """
         self.pressed = False
         self.held = False
         if curwindow.collapsed:
@@ -284,6 +295,14 @@ class button(Widget):
 
 class button_img(Widget):
     def __init__(self,w,h,fp,source=None):
+        """Image button widget that displays an image instead of text.
+
+        Args:
+            w (int): Width of the button in pixels
+            h (int): Height of the button in pixels 
+            fp (str): File path to the image
+            source (list, optional): Source rectangle [x,y,w,h] for image. Defaults to None.
+        """
         self.pressed = False
         self.held = False
         image = _cached_image(fp)
@@ -310,6 +329,11 @@ class button_img(Widget):
 
 class label(Widget):
     def __init__(self,text):
+        """Text label widget for displaying static text.
+
+        Args:
+            text (str): Text content to display
+        """
         if curwindow.collapsed:
             return
         w = _measure_text(text,10)
@@ -351,6 +375,17 @@ class TextInput:
         
 class textinput(Widget):
     def __init__(self,w:int,label:str,id:str,default="") -> TextInput:
+        """Text input field widget for editable text.
+
+        Args:
+            w (int): Width of the input field
+            label (str): Placeholder text when empty
+            id (str): Unique identifier for this input
+            default (str, optional): Default text value. Defaults to empty string.
+
+        Returns:
+            TextInput: TextInput object containing the input state
+        """
         bg = _rl.Color(128, 128, 128, 64)
         fg = _rl.Color(255, 255, 255, 255)
         if f"ti_{id}" in GUIState.Widgets:
@@ -458,6 +493,16 @@ class textinput(Widget):
         
 class slider_vec2(Widget):
     def __init__(self,w:int,h:int,label:str,id:str,sens:float=0.005,default=[0,0]):
+        """2D vector slider widget for X/Y coordinate input.
+
+        Args:
+            w (int): Width of the slider
+            h (int): Height of the slider
+            label (str): Label text
+            id (str): Unique identifier
+            sens (float, optional): Mouse sensitivity. Defaults to 0.005.
+            default (list, optional): Default [x,y] values. Defaults to [0,0].
+        """
         self.id = id
         if f"sl2d_{id}" in GUIState.Widgets:
             self.obj = GUIState.Widgets[f"sl2d_{id}"]
@@ -517,6 +562,16 @@ class slider_vec2(Widget):
         
 class slider(Widget):
     def __init__(self,w,label,id,sens=0.005,pressed=False,default=0):
+        """Single value slider widget for numeric input.
+
+        Args:
+            w (int): Width of the slider
+            label (str): Label text
+            id (str): Unique identifier
+            sens (float, optional): Mouse sensitivity. Defaults to 0.005.
+            pressed (bool, optional): Initial pressed state. Defaults to False.
+            default (int, optional): Default value. Defaults to 0.
+        """
         self.id = id
         if f"sl_{id}" in GUIState.Widgets:
             self.obj = GUIState.Widgets[f"sl_{id}"]
@@ -576,13 +631,13 @@ class slider(Widget):
     
 class solidcolor(Widget):
     def __init__(self,w,h,color,border=False):
-        """draws a solid color rectangle.
+        """Solid color rectangle widget.
 
         Args:
-            w (int): rectangle width
-            h (int): rectangle height
-            color (list): rectangle color [r,g,b]
-            border (bool, optional): should the rectangle have a dark border? Defaults to False.
+            w (int): Width of rectangle
+            h (int): Height of rectangle
+            color (list): RGB color values [r,g,b]
+            border (bool, optional): Draw border around rectangle. Defaults to False.
         """
         if curwindow.collapsed:
             return
@@ -593,11 +648,11 @@ class solidcolor(Widget):
     
 class colorpicker(Widget):
     def __init__(self,id,default=[0,0,0]):
-        """simple color picker widget.
+        """RGB color picker widget with sliders.
 
         Args:
-            id (_type_): colorpicker id
-            default (list, optional): default r,g,b color. Defaults to [0,0,0].
+            id (str): Unique identifier
+            default (list, optional): Default RGB color values. Defaults to [0,0,0].
         """
         self.id = id
         if f"cp_{id}" in GUIState.Widgets:
@@ -632,13 +687,13 @@ class colorpicker(Widget):
 
 class image(Widget):
     def __init__(self,w:int,h:int,fp:str,source:list=None):
-        """Simple image widget.
+        """Image display widget.
 
         Args:
-            w (int): image widh
-            h (int): image height
-            fp (str): file path
-            source (list, optional): image source (x,y,w,h). Defaults to None.
+            w (int): Width to display image
+            h (int): Height to display image
+            fp (str): File path to image
+            source (list, optional): Source rectangle [x,y,w,h]. Defaults to None for full image.
         """
         image = _cached_image(fp)
         if curwindow.collapsed:
@@ -660,14 +715,14 @@ class collheadInfo:
 
 class collapsing_header(Widget):
     def __init__(self,w,label,id,collapsed = True,indentation=5):
-        """Collapsing header widget. allows the user to collapse and expand widgets.
+        """Collapsible section header widget.
 
         Args:
-            w (int): width of the widget
-            label (str): label of the widget
-            id (str): identifier for the widget
-            collapsed (bool, optional): start of collapsed or expanded. Defaults to True.
-            indentation (int, optional): amount to push widgets inside of the header to the right. Defaults to 5.
+            w (int): Width of header
+            label (str): Header text
+            id (str): Unique identifier
+            collapsed (bool, optional): Initial collapsed state. Defaults to True.
+            indentation (int, optional): Child widget indent pixels. Defaults to 5.
         """
         self.id = id
         self.w = w
@@ -689,6 +744,7 @@ class collapsing_header(Widget):
         if self.collapsed:
             curwindow.collapsed = True
     def show(self):
+        """Displays the header."""
         self.startx = winx
         self.starty = winy
         if curwindow.collapsed and self.wincollapsed:
@@ -727,12 +783,12 @@ def reset_collapsing_header(id:str):
     
 class checkbox_button(Widget):
     def __init__(self,label,id,value=False):
-        """Circular toggle button widget.
+        """Checkbox toggle button widget.
 
         Args:
-            label (str): label of the widget
-            id (str): identifier for the widget
-            value (bool, optional): value. Defaults to False.
+            label (str): Label text
+            id (str): Unique identifier
+            value (bool, optional): Initial checked state. Defaults to False.
         """
         self.id = id
         self.label = label

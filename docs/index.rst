@@ -52,9 +52,27 @@ Here's a quick guide to getting started with SGUI.
 API reference
 -------------
 
-.. automodule:: sgui
-    :members:
+.. autofunction:: sgui.init
 
 .. autoclass:: sgui.Window
+.. autoclass:: sgui.Widget
+
+.. autoclass:: sgui.button
+.. autoclass:: sgui.imgbutton
+.. autoclass:: sgui.label
+.. autoclass:: sgui.textinput
+.. autoclass:: sgui.slider_vec2
+.. autoclass:: sgui.slider
+.. autoclass:: sgui.solidcolor
+.. autoclass:: sgui.colorpicker
+.. autoclass:: sgui.image
+.. autoclass:: sgui.collapsingheader
     :members:
-    :undoc-members:
+.. autofunction:: sgui.reset_collapsing_header
+.. autoclass:: sgui.checkbox_button
+
+.. autoclass:: sgui.GUIState
+.. autofunction:: sgui.set_indent
+.. autofunction:: sgui.sameline
+.. autofunction:: sgui.cancel_sameline
+.. autofunction:: sgui._log
