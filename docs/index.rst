@@ -54,3 +54,7 @@ API reference
 
 .. automodule:: sgui
     :members:
+
+.. autoclass:: sgui.Window
+    :members:
+    :undoc-members:
