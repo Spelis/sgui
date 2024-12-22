@@ -9,7 +9,8 @@ SGUI is a Python library for creating graphical user interfaces (GUIs). It uses 
 .. toctree::
    :maxdepth: 2
    :caption: Table of Contents
-   
+
+   index
    installation
    gettingstarted
    apireference
