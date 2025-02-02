@@ -15,6 +15,9 @@ API reference
 .. autoclass:: sgui.solidcolor
 .. autoclass:: sgui.colorpicker
 .. autoclass:: sgui.image
+.. autoclass:: sgui.frame
+.. autofunction:: sgui.notify
+.. autofunction:: sgui.NotifTick
 .. autoclass:: sgui.collapsing_header
     :members:
 .. autofunction:: sgui.reset_collapsing_header

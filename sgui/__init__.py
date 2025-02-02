@@ -1,7 +1,7 @@
 import string
 import pyray as _rl
 import inspect,datetime
-
+import datetime
 
 class GUIState:
     """GUI state, example usage might be to edit widget values or see if a widget uses a keyboard key."""
@@ -14,9 +14,16 @@ class GUIState:
         return curwindow
     Widgets = {}
     SpecialWindows = {}
+    SelectedWidget = 0
+    Curwidget = 0
+    Notifications = []
+    NotifHeight = []
+    def get_is_current():
+        if GUIState.SelectedWidget == GUIState.Curwidget and curwindow.selected:
+            return True
     
 _textmeasurecache = {}
-    
+
 def _measure_text(text,fs):
     key = (text,fs)
     if key not in _textmeasurecache:
@@ -39,6 +46,16 @@ def _cached_image(fp):
     if fp not in _imagecache:
         _imagecache[fp] = _rl.load_texture(fp)
     return _imagecache[fp]
+
+mousecur_wait = _rl.MouseCursor.MOUSE_CURSOR_DEFAULT
+
+def set_mouse_cursor(cursor):
+    """Sets the mouse cursor.
+    Args:
+        cursor (_rl.MouseCursor): The cursor to set.
+    """
+    global mousecur_wait
+    mousecur_wait = cursor
 
 global curwindow,winy,lastwinychange,winx,lastwinxchange,indent
 
@@ -82,6 +99,55 @@ def _get_class_name(depth=2):
         return str(caller_locals['self'].__class__.__name__)
     return str("")
 
+def NotifTick():
+    """Ticks the notification system. Must be called every frame."""
+    for i in GUIState.Notifications:
+        # Calculate animation offset
+        time_remaining = (i['duration'] - datetime.datetime.now()).total_seconds()
+        xoff = min(300 * time_remaining, 0) if time_remaining < 1 else 0
+        if time_remaining < 0:
+            GUIState.NotifHeight.pop(GUIState.Notifications.index(i))
+            GUIState.Notifications.remove(i)
+            continue
+            
+        # Draw notification
+        w = _measure_text(max(i['title'],i['text']), 10) + 10
+        h = GUIState.NotifHeight[GUIState.Notifications.index(i)]
+        y_pos = sum(GUIState.NotifHeight[:GUIState.Notifications.index(i)]) * 1.1 + 10
+        x_pos = _rl.get_screen_width() - 10 - w + xoff
+        
+        a = 255 - round(0 if time_remaining > 1 else 255 * (1-time_remaining))
+        
+        if _rl.check_collision_point_rec(_rl.get_mouse_position(), [x_pos, y_pos, w, h]) and _rl.is_mouse_button_pressed(_rl.MouseButton.MOUSE_BUTTON_LEFT) and not i['clicked']:
+            i['duration'] = datetime.datetime.now() + datetime.timedelta(seconds=1)
+            i['clicked'] = True
+        
+        _rl.draw_rectangle_rec([x_pos, y_pos, w, h], _rl.Color(40,40,40,a))
+        _rl.draw_rectangle_lines_ex([x_pos, y_pos, w, h], 2, _rl.Color(0,255,255,a))
+        _rl.draw_text(i['title'], round(x_pos + 5), round(y_pos + 2), 10, _rl.Color(255,255,255,a))
+        _rl.draw_text(i['text'], round(x_pos + 5), round(y_pos + 12), 10, _rl.Color(255,255,255,a))
+        
+        if not i['clicked']:
+            progress = 0-(time_remaining / i['total'])*1000
+            _rl.draw_line(
+                round(x_pos), round(y_pos + GUIState.NotifHeight[GUIState.Notifications.index(i)]),
+                round(x_pos - (w * progress)), round(y_pos + GUIState.NotifHeight[GUIState.Notifications.index(i)]),
+                _rl.Color(255,255,255,a)
+            )
+
+def notify(title,text,duration):
+    """Creates a notification."""
+    #if _rl.is_window_focused():
+    #    n = notify2.Notification(title,text,duration)
+    #    n.set_timeout(duration)
+    #    n.show()
+    # couldnt install notify2 on my machine so f**k this shit
+    duration *= 1000
+    n = {"title":title,"text":text,"duration":datetime.datetime.now()+datetime.timedelta(milliseconds=duration),"total":duration,"clicked":False}
+    h = (text.count("\n")+3)*10
+    GUIState.Notifications.append(n)
+    GUIState.NotifHeight.append(h)
+
 class Window:
     def __init__(self,x,y,w,h,title,collapsed=False,resizable=True,movable=True,titlecolor=_rl.Color(0,255,255,255),scrollable=True):
         """A draggable, resizable window container for GUI widgets.
@@ -122,6 +188,7 @@ class Window:
         self.maxscroll_x = 0
         self.titlebar = True
         self.titlebar_height = 15
+        self.selected = False
         
     def __repr__(self):
         return f"<{'collapsed' if self.collapsed else 'expanded'} Window {self.title} [{self.x}, {self.y}, {self.w}, {self.h}]>"
@@ -138,6 +205,7 @@ class Window:
         curwindow = self
         winy = 1
         self.maxscroll_x = 1
+        GUIState.Curwidget = 0
         lastwinxchange = []
         lastwinychange = []
 
@@ -169,7 +237,7 @@ class Window:
                 
                 if _rl.check_collision_point_rec(mp, [self.x + self.w - 2, self.y + scroll_pos + self.titlebar_height, 2, scroll_height]):
                     if _rl.is_mouse_button_down(_rl.MouseButton.MOUSE_BUTTON_LEFT):
-                        self.realscroll_y += mpd.y * (winy / self.h)
+                        self.realscroll_y -= mpd.y * (winy / self.h)
 
             if self.maxscroll_x > self.w - 20:
                 scroll_width = max(30, (self.w / self.maxscroll_x) * (self.w-20))
@@ -179,17 +247,18 @@ class Window:
                 if _rl.check_collision_point_rec(mp, [self.x + scroll_pos, self.y + self.h - 2, scroll_width, 2]):
                     if _rl.is_mouse_button_down(_rl.MouseButton.MOUSE_BUTTON_LEFT):
                         self.realscroll_x += mpd.x * (self.maxscroll_x / self.w)
-
-
             
         # Update max horizontal scroll limit
         max_scroll_x = -(max(0, self.maxscroll_x - self.w + 20))
         if self.realscroll_x < max_scroll_x:
-            self.realscroll_x = max_scroll_x        
+            self.realscroll_x = max_scroll_x
         if self.titlebar:
-            _rl.draw_rectangle(0,0,self.w,self.titlebar_height,_rl.Color(self.titlecolor.r//2,self.titlecolor.g//2,self.titlecolor.b//2,255))
-            _rl.draw_rectangle_lines_ex([0,0,self.w,self.titlebar_height],1,self.titlecolor)
-            _rl.draw_rectangle_rec([2,2,11,11],self.titlecolor)
+            color = self.titlecolor
+            if not self.selected:
+                color = _rl.Color(128,128,128,255)
+            _rl.draw_rectangle(0,0,self.w,self.titlebar_height,_rl.Color(color.r//2,color.g//2,color.b//2,255))
+            _rl.draw_rectangle_lines_ex([0,0,self.w,self.titlebar_height],1,color)
+            _rl.draw_rectangle_rec([2,2,11,11],color)
             _rl.draw_text(self.title,self.titlebar_height,2,10,_rl.WHITE)
             if _rl.is_mouse_button_pressed(_rl.MouseButton.MOUSE_BUTTON_LEFT):
                 if _rl.check_collision_point_rec(mp, [self.x+3,self.y+3,10,10]):
@@ -213,8 +282,22 @@ class Window:
         self.scroll_x_float = lerp(self.scroll_x_float, self.realscroll_x, 0.9)
         self.scroll_y_float = lerp(self.scroll_y_float, self.realscroll_y, 0.9)
         self.scroll_x = round(self.scroll_x_float)
-        self.scroll_y = round(self.scroll_y_float)        
+        self.scroll_y = round(self.scroll_y_float)    
+        if self.selected:
+            GUIState.Keyboard.append("Enter")
+            GUIState.Keyboard.append("Up")
+            GUIState.Keyboard.append("Down")
+            if _rl.is_key_pressed(_rl.KeyboardKey.KEY_DOWN):
+                GUIState.SelectedWidget += 1
+            if _rl.is_key_pressed(_rl.KeyboardKey.KEY_UP):
+                GUIState.SelectedWidget -= 1
+            GUIState.SelectedWidget %= GUIState.Curwidget+1
         if _rl.is_mouse_button_pressed(_rl.MouseButton.MOUSE_BUTTON_LEFT):
+            if self.gethover():
+                self.selected = True
+            else:
+                GUIState.SelectedWidget = 0
+                self.selected = False
             if (not self.resizing) and self.movable:
                 if self.titlebar:
                     if _rl.check_collision_point_rec(mp, [self.x,self.y,self.w,15]) or self.dragging:
@@ -241,12 +324,14 @@ class Window:
         winy = 0
         self.widgetid = 0
         curwindow = None
+        _rl.set_mouse_cursor(mousecur_wait)
         
     def gethover(self):
         mp = _rl.get_mouse_position()
         if _rl.check_collision_point_rec(mp, [self.x,self.y,self.w,self.h]):
             return True
         return False
+
 
 
 class Widget:
@@ -274,11 +359,49 @@ class Widget:
         lastwinychange.append(self.h+3)
         lastwinxchange.append(self.x+w+5)
         winx = indent
+        GUIState.Curwidget += 1
         if self.y > cw.h:
             return True
         #_log(f"Widget: {_get_class_name()} at {self.x},{self.y} by {self.w}x{self.h}")
         return False
+    def getpressed():
+        return GUIState.get_is_current() and _rl.is_key_pressed(_rl.KeyboardKey.KEY_ENTER) and curwindow.selected
+    def getheld():
+        return GUIState.get_is_current() and _rl.is_key_down(_rl.KeyboardKey.KEY_ENTER) and curwindow.selected
 
+class frame(Widget):
+    def __init__(self,w,h):
+        """Standard frame widget.
+
+        Args:
+            w (int): width of the Widget
+            h (int): height of the Widget
+        """
+        global curwindow
+        super().__init__(winx,winy,w,h)
+        self.cw = curwindow
+        self.rtex = _rl.load_render_texture(w,h)
+        self.collapsed = False
+        self.scroll_x = self.cw.scroll_x
+        self.scroll_y = self.cw.scroll_y
+        self.maxscroll_x = 0
+        self.maxscroll_y = 0
+        self.titlebar_height = 20
+        self.x = self.cw.x
+        self.y = self.cw.y
+        self.selected = True
+    def __enter__(self):
+        global curwindow
+        curwindow = self
+        _rl.end_texture_mode()
+        _rl.begin_texture_mode(self.rtex)
+        _rl.clear_background(_rl.Color(0,0,0,0))
+    def __exit__(self,*args):
+        global curwindow
+        curwindow = self.cw
+        _rl.end_texture_mode()
+        _rl.begin_texture_mode(self.cw.wintex)
+        _rl.draw_texture_pro(self.rtex.texture, [0,0,self.rtex.texture.width,-self.rtex.texture.height],[self.x,self.y,self.rtex.texture.width,self.rtex.texture.height], [0,0],0,_rl.Color(255,255,255,255))
 
 class button(Widget):
     def __init__(self,w,label):
@@ -299,12 +422,20 @@ class button(Widget):
         fg = _rl.Color(255,255,255,255)
         if not curwindow.h < self.y+5:
             if _rl.check_collision_point_rec(self.mp, [self.x+self.off.x,self.vy+self.off.y,self.w,self.vh]):
+                set_mouse_cursor(_rl.MouseCursor.MOUSE_CURSOR_POINTING_HAND)
                 color.a = 128
                 if _rl.is_mouse_button_down(_rl.MouseButton.MOUSE_BUTTON_LEFT):
                     fg = (102,191,255,255)
                     self.held = True
                 if _rl.is_mouse_button_released(_rl.MouseButton.MOUSE_BUTTON_LEFT):
                     self.pressed = True
+                    GUIState.SelectedWidget = GUIState.Curwidget
+        if Widget.getpressed():
+            self.pressed = True
+        if GUIState.SelectedWidget == GUIState.Curwidget:
+            fg = (102,191,255,255)
+        if Widget.getheld():
+            self.held = True
         _rl.draw_rectangle(self.x,self.vy,self.w,self.vh,color)
         _rl.draw_rectangle_lines_ex([self.x,self.vy,self.w,self.vh],1,fg)
         _rl.draw_text(label,self.x+2,self.y+1,10,fg)
@@ -339,6 +470,13 @@ class button_img(Widget):
                 self.held = True
             if _rl.is_mouse_button_released(_rl.MouseButton.MOUSE_BUTTON_LEFT):
                 self.pressed = True
+                GUIState.SelectedWidget = GUIState.Curwidget
+        if GUIState.SelectedWidget == GUIState.Curwidget:
+                fg = (102,191,255,255)
+        if Widget.getpressed():
+            self.pressed = True
+        if Widget.getheld():
+            self.held = True
         _rl.draw_rectangle(self.x,self.y,self.w,self.h,color)
         _rl.draw_texture_pro(image,source,[self.x,self.y,w,self.h],[0,0],0,_rl.Color(255,255,255,255))
         _rl.draw_rectangle_lines_ex([self.x,self.y,self.w,self.vh],1,fg)
@@ -352,12 +490,14 @@ class label(Widget):
         """
         if curwindow.collapsed:
             return
-        w = _measure_text(text,10)
+        w = _measure_text(text,10)+2
         h = (12 * (text.count('\n')+1))
         if super().__init__(winx,winy,w,h):
             self = None
             return
-        _rl.draw_text(text,round(self.x),round(self.y),10,_rl.Color(255,255,255,255))
+        if GUIState.SelectedWidget == GUIState.Curwidget:
+            _rl.draw_rectangle_lines_ex([self.x,self.y,self.w,self.h],1,_rl.Color(102,191,255,255))
+        _rl.draw_text(text,round(self.x+1),round(self.y),10,_rl.Color(255,255,255,255))
         
 class sliderInfo:
     def __init__(self,value,pressed=False):
@@ -425,18 +565,30 @@ class textinput(Widget):
                 if _rl.is_mouse_button_down(_rl.MouseButton.MOUSE_BUTTON_LEFT):
                     fg = _rl.Color(102, 191, 255, 255)
                     click_pos = self.mp.x - (self.x + self.off.x)
-                    self.cursor = min(len(self.value), max(0, int(click_pos / 6)))
-                    if not _rl.is_key_down(_rl.KeyboardKey.KEY_LEFT_SHIFT):
-                        self.selection_start = self.cursor
+                    
+                    # Calculate cursor position based on text width
+                    cursor_pos = 0
+                    for i in range(len(self.value)):
+                        if _measure_text(self.value[:i+1], 10) > click_pos:
+                            break
+                        cursor_pos = i
+                    
+                    self.cursor = cursor_pos
+                    self.selection_start = cursor_pos
                 if _rl.is_mouse_button_released(_rl.MouseButton.MOUSE_BUTTON_LEFT):
                     self.selected = True
+                    GUIState.SelectedWidget = GUIState.Curwidget
             else:
                 if _rl.is_mouse_button_down(_rl.MouseButton.MOUSE_BUTTON_LEFT):
                     self.selected = False
+        if GUIState.SelectedWidget == GUIState.Curwidget:
+            fg = _rl.Color(102, 191, 255, 255)
+        if Widget.getpressed():
+            self.selected = not self.selected
         _rl.draw_rectangle(self.x,self.y,self.w,self.vh,bg)
         if self.selected:
             GUIState.Keyboard += (string.ascii_letters + string.digits + string.punctuation).split()
-            GUIState.Keyboard.append("Backspace")
+            GUIState.Keyboard.extend(["Backspace","Left","Right"])
             charint = _rl.get_char_pressed()
             charstr = chr(charint)
             
@@ -471,7 +623,8 @@ class textinput(Widget):
                     self.value = self.value[:self.cursor] + self.value[self.cursor+1:]
                     self.cursor = max(0, self.cursor - 1)
                     self.selection_start = self.cursor
-            
+        self.cursor = min(len(self.value)-1, self.cursor)
+        self.selection_start = min(len(self.value)-1, self.selection_start)
         if self.value == "":
             fg.a = 128
             _rl.draw_text(label,self.x+2,self.y+1,10,fg)
@@ -493,9 +646,8 @@ class textinput(Widget):
             else:
                 _rl.draw_text(self.value,self.x+2,self.y+1,10,fg)
                 if self.selected and round(_rl.get_time())%2 == 0:
-                    cursor_x = self.x+2+_measure_text(self.value[:self.cursor+1],10)
-                    _rl.draw_text("_",cursor_x,self.y+1,10,fg)
-                    
+                    cursor_x = self.x + 2 + _measure_text(self.value[:self.cursor+1], 10)
+                    _rl.draw_rectangle(cursor_x, self.y+1, 2, 10, fg) # Thicker cursor line                  
         _rl.draw_rectangle_lines_ex(
             [self.x, self.y, self.w, self.vh],
             1,
@@ -541,9 +693,12 @@ class slider_vec2(Widget):
             if _rl.check_collision_point_rec(self.mp, [self.x+self.off.x,self.y+self.off.y,self.w,self.vh]):
                 bg = _rl.Color(128,128,128,128)
                 if _rl.is_mouse_button_pressed(0):
+                    GUIState.SelectedWidget = GUIState.Curwidget
                     pressed = True
         if _rl.is_mouse_button_up(0):
             pressed = False
+        if Widget.getpressed():
+            pressed = True
         _rl.draw_rectangle(self.x, self.y, self.w, self.vh, bg)
         _rl.draw_rectangle_lines_ex([self.x,self.y,self.w,self.vh],1,fg)
         _rl.draw_text(f"{label}:\n{float(value[0]):.5}\n{float(value[1]):.5}",self.x+1,self.y+1,10,fg)
@@ -614,10 +769,13 @@ class slider(Widget):
                 bg = _rl.Color(128,128,128,128)
                 if _rl.is_mouse_button_pressed(0):
                     pressed = True
+                    GUIState.SelectedWidget = GUIState.Curwidget
                 if _rl.is_mouse_button_pressed(2):
                     textactive = not textactive
         if _rl.is_mouse_button_up(0):
             pressed = False
+        if Widget.getpressed():
+            pressed = True
         _rl.draw_rectangle(self.x, self.y, self.w, self.vh, bg)
         _rl.draw_rectangle_lines_ex([self.x,self.y,self.w,self.vh],1,fg)
         _rl.draw_text(f"{label}:",self.x+1,self.y+1,10,fg)
@@ -690,12 +848,7 @@ class colorpicker(Widget):
         value[2] = round(slider(50,"B",id+"b",1,default=default[2]).limit(0,255).value)
         sameline()
         sc = solidcolor(12,12,_rl.Color(value[0],value[1],value[2],255),True)
-        if not curwindow.h < sc.y+sc.h:
-            if _rl.check_collision_point_rec(self.mp, [sc.x+self.off.x,sc.y+self.off.y,sc.w,sc.h]):
-                if _rl.is_mouse_button_released(0):
-                    pickeractive = not pickeractive
         self.value = _rl.Color(value[0],value[1],value[2],255)
-        GUIState.Widgets[f"cp_{id}"].pickeractive = pickeractive
         GUIState.Widgets[f"cp_{id}"].r = value[0]
         GUIState.Widgets[f"cp_{id}"].g = value[1]
         GUIState.Widgets[f"cp_{id}"].b = value[2]
@@ -768,14 +921,20 @@ class collapsing_header(Widget):
         if super().__init__(winx,winy,self.w,15):
             self = None
             return
-        _rl.draw_rectangle(self.x,self.y,self.w,self.vh,_rl.Color(0 if not self.collapsed else 128,128,128,255))
-        _rl.draw_rectangle_lines_ex([self.x,self.y,self.w,self.vh],1,_rl.Color(0 if not self.collapsed else 255,255,255,255))
-        _rl.draw_text(self.label,self.x+3,self.y+3,10,_rl.Color(255,255,255,255))
-        _rl.gui_draw_icon(115 if self.collapsed else 116,self.x+self.w-16,self.y-1,1,_rl.Color(255,255,255,255))
         if not curwindow.h < self.y+5:
             if _rl.is_mouse_button_pressed(0):
                 if _rl.check_collision_point_rec(self.mp,[self.x+self.off.x,self.y+self.off.y,self.w,self.vh]):
                     self.obj.collapsed = not self.obj.collapsed
+                    GUIState.SelectedWidget = GUIState.Curwidget
+        color = _rl.Color(0 if not self.collapsed else 255,255,255,255)
+        if GUIState.SelectedWidget == GUIState.Curwidget:
+            color = _rl.Color(102, 191, 255, 255)
+        if Widget.getpressed():
+            self.obj.collapsed = not self.obj.collapsed
+        _rl.draw_rectangle(self.x,self.y,self.w,self.vh,[color.r//2,color.g//2,color.b//2,255])
+        _rl.draw_rectangle_lines_ex([self.x,self.y,self.w,self.vh],1,color)
+        _rl.draw_text(self.label,self.x+3,self.y+3,10,_rl.Color(255,255,255,255))
+        _rl.gui_draw_icon(115 if self.collapsed else 116,self.x+self.w-16,self.y-1,1,_rl.Color(255,255,255,255))
         GUIState.Widgets[f"ch_{id}"] = collheadInfo(self.collapsed,self.wincollapsed,self.oldindent,self.startx,self.starty)
         if self.collapsed:
             return False
@@ -828,9 +987,12 @@ class checkbox_button(Widget):
             if _rl.is_mouse_button_pressed(0):
                 if _rl.check_collision_point_rec(self.mp,[self.x+self.off.x,self.y+self.off.y,self.w,self.vh]):
                     self.value = not self.value
-        #_rl.draw_circle(self.x+6,self.y+6,5,self.color)
-        #_rl.draw_circle_lines(self.x+6,self.y+6,5,_rl.Color(0,255,255,255))
+                    GUIState.SelectedWidget = GUIState.Curwidget
+        if Widget.getpressed():
+            self.value = not self.value
         _rl.draw_rectangle(self.x,self.y+1,10,10,self.color)
         _rl.draw_rectangle_lines_ex([self.x,self.y+1,10,10],1,_rl.Color(0,255,255,255))
+        if GUIState.get_is_current():
+            _rl.draw_rectangle_lines_ex([self.x,self.y,self.w,self.h],1,_rl.Color(255,255,255,255))
         _rl.draw_text(self.label,self.x+12,self.y+1,10,_rl.Color(255,255,255,255))
         GUIState.Widgets[f"cb_{id}"] = self

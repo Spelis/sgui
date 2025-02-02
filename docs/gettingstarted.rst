@@ -15,6 +15,7 @@ Here's a quick example to getting started with SGUI.
     while not window_should_close(): # raylib drawing functions
         begin_drawing()
         clear_background(BLACK)
+        gui.NotifTick() # update the notifications (optional)
         with win: # this is a context manager that sets the window as the current window
             gui.label("Hello World!") # displays a little label inside the window
         end_drawing()

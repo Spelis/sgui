@@ -6,6 +6,8 @@
 
 A lightweight and easy-to-use GUI library inspired by the [ImGui](https://github.com/ocornut/imgui) library. The library is written in Python and uses the [Raylib](https://github.com/raysan5/raylib) library for rendering.
 
+[Documentation](https://sgui.readthedocs.io/en/latest/)
+
 ### Contributions are very welcome! :D
 
 ## Features
@@ -20,21 +22,18 @@ A lightweight and easy-to-use GUI library inspired by the [ImGui](https://github
 ## Example Usage
 ```python
 import sgui as gui
-from pyray import *
+from pyray import * # Raylib
 
-# initialize raylib
 init_window(800,600,"SGUI Example")
-gui.init()
-window = gui.Window(10,10,150,150,"Example Window")
+gui.init() # initialize the library after raylib
+win = gui.Window(10,10,150,150,"My Window!") # create a window
 
-while not window_should_close(): # raylib window loop and drawing
+while not window_should_close(): # raylib drawing functions
     begin_drawing()
     clear_background(BLACK)
-
-    with window: # my gui library :)
-        if gui.button(100,"Example Button"):
-            print("Button was pressed!")
-
+    gui.NotifTick() # update the notifications (optional)
+    with win: # this is a context manager that sets the window as the current window
+        gui.label("Hello World!") # displays a little label inside the window
     end_drawing()
 
 close_window()

@@ -20,14 +20,21 @@ while not window_should_close():
     begin_drawing()
     clear_background(BLACK)
     draw_fps(10,10)
+    gui.NotifTick()
     with win:
-        if gui.checkbox_button("hello","test",False).value:
-            gui.sameline()
-            if gui.checkbox_button("world","test2",False).value:
+        #with gui.frame(100,100):
+        if 1:
+            gui.label(str(gui.GUIState.SelectedWidget))
+            if gui.checkbox_button("hello","test",False).value:
                 gui.sameline()
-                gui.label("Yipee!")
-        if gui.button(100,f"Click me").pressed:
-            timesclicked += 1
+                if gui.checkbox_button("world","test2",False).value:
+                    gui.sameline()
+                    gui.label("Yipee!")
+            if gui.button(100,f"Click me").pressed:
+                timesclicked += 1
+        dur = gui.slider(100,"duration","duration").value
+        if gui.button(100,"click me for notification").pressed:
+            gui.notify("Notification","you clicked the button!",dur)
         gui.label("times clicked: " + str(timesclicked))
         if gui.button(100,"Hold me").held:
             gui.sameline()

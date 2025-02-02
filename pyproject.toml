@@ -1,6 +1,6 @@
 [project]
 name = "spelis-sgui"
-version = "0.0.8"
+version = "0.0.9"
 authors = [
   { name="Elis Eriksson", email="elis.eriksson.2010@gmail.com" },
 ]

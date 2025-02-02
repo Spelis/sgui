@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="sgui",
-    version="0.0.8",
+    version="0.0.9",
     packages=find_packages(),
     install_requires=[
         "raylib>=5.0.0"
