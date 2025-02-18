@@ -1,11 +1,11 @@
 [project]
 name = "spelis-sgui"
-version = "0.0.9"
+version = "0.1.0"
 authors = [
   { name="Elis Eriksson", email="elis.eriksson.2010@gmail.com" },
 ]
 dependencies = [
-    'raylib>=5.0.0'
+    'raylib>=5.5.0'
 ]
 description = "Lightweight and easy-to-use Immediate Mode GUI library for Python and Raylib"
 readme = "README.md"

@@ -1,6 +1,7 @@
 from pyray import *
 import sgui as gui
 import subprocess, os, platform
+import math
 
 def open_file(filepath):
     if platform.system() == 'Darwin':       # macOS
@@ -22,8 +23,10 @@ while not window_should_close():
     draw_fps(10,10)
     gui.NotifTick()
     with win:
-        #with gui.frame(100,100):
+        #with gui.frame(100,100+round(math.sin(get_time())*10)):
         if 1:
+            # with gui.frame(50,50):
+            #     gui.label("I'm A FramEEEE!!!!")
             gui.label(str(gui.GUIState.SelectedWidget))
             if gui.checkbox_button("hello","test",False).value:
                 gui.sameline()
@@ -35,6 +38,10 @@ while not window_should_close():
         dur = gui.slider(100,"duration","duration").value
         if gui.button(100,"click me for notification").pressed:
             gui.notify("Notification","you clicked the button!",dur)
+        
+        isize = round(gui.slider(100,"Icon Size","iconsize",default=10).value)
+        gui.button_icon(100,isize,"Logo Button!","logo.png")
+        
         gui.label("times clicked: " + str(timesclicked))
         if gui.button(100,"Hold me").held:
             gui.sameline()
