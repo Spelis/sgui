@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / 'src'))
 
 project = "SGUI"
 author = "Elis Eriksson"
-html_theme = "sphinx_rtd_theme"
+html_theme = "furo"
 extensions = ['myst_parser','sphinx.ext.autodoc','sphinx.ext.napoleon']
 source_suffix = {
     '.rst': 'restructuredtext',
@@ -20,3 +20,6 @@ autodoc_default_options = {
     'undoc-members': True,
     'exclude-members': '__weakref__'
 }
+html_css_files = [
+    'rtd_dark.css'
+]
